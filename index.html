@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1f7a5a">
+<title>Литовские местоимения — тренажёр</title>
+<style>
+  :root{
+    --bg:#f6f7f5; --card:#ffffff; --ink:#1d2421; --muted:#6b756f;
+    --line:#e4e8e4; --accent:#1f7a5a; --accent-soft:#e6f1ec;
+    --good:#1f7a5a; --good-bg:#e6f4ec; --bad:#c0392b; --bad-bg:#fbeaea;
+    --hint-bg:#fff8e8; --hint-line:#f0dca6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14171a; --card:#1d2125; --ink:#e8ebe8; --muted:#9aa49d;
+      --line:#2c3238; --accent:#43b98a; --accent-soft:#1c3a30;
+      --good:#43b98a; --good-bg:#173028; --bad:#e57368; --bad-bg:#3a1f1d;
+      --hint-bg:#2a2616; --hint-line:#4d4424;
+    }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.45; padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:18px 16px 40px}
+  header h1{font-size:19px; margin:2px 0 2px; font-weight:650}
+  header p{margin:0; color:var(--muted); font-size:13px}
+
+  .filters{display:flex; flex-wrap:wrap; gap:7px; margin:16px 0 8px}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--muted);
+    border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer; user-select:none;
+  }
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#fff}
+
+  .stats{display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:13px; margin:6px 2px 12px}
+  .stats b{color:var(--ink); font-weight:600}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:20px 18px; box-shadow:0 1px 2px rgba(0,0,0,.04);
+  }
+  .meta{font-size:12px; color:var(--muted); margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap}
+  .tag{background:var(--accent-soft); color:var(--accent); border-radius:6px; padding:2px 8px; font-weight:600}
+  .sentence{font-size:21px; line-height:1.5; margin:2px 0 18px}
+  .blank{display:inline-block; min-width:62px; border-bottom:2px dashed var(--accent); text-align:center; color:var(--accent); font-weight:600; padding:0 6px}
+  .blank.filled{border-bottom-style:solid}
+
+  .opts{display:grid; gap:9px}
+  .opt{
+    width:100%; text-align:left; border:1.5px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:12px; padding:13px 15px; font-size:18px; cursor:pointer; transition:.12s; font-weight:500;
+  }
+  .opt:active{transform:scale(.99)}
+  .opt.correct{border-color:var(--good); background:var(--good-bg); color:var(--good)}
+  .opt.wrong{border-color:var(--bad); background:var(--bad-bg); color:var(--bad)}
+  .opt:disabled{cursor:default}
+
+  .row{display:flex; gap:10px; margin-top:16px}
+  .btn{
+    flex:1; border:none; border-radius:12px; padding:13px; font-size:15px; font-weight:600; cursor:pointer;
+  }
+  .btn.ghost{background:transparent; border:1.5px solid var(--line); color:var(--ink)}
+  .btn.primary{background:var(--accent); color:#fff}
+  .btn:disabled{opacity:.45; cursor:default}
+
+  .hint{
+    margin-top:14px; background:var(--hint-bg); border:1px solid var(--hint-line);
+    border-radius:12px; padding:14px 15px; font-size:14.5px; display:none;
+  }
+  .hint.show{display:block}
+  .hint .h-row{margin:4px 0}
+  .hint .h-label{color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.03em}
+  .hint .lt{font-style:italic}
+  footer{text-align:center; color:var(--muted); font-size:12px; margin-top:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Lietuvių kalbos įvardžiai</h1>
+    <p>Тренажёр литовских местоимений · работает офлайн</p>
+  </header>
+
+  <div class="filters" id="filters"></div>
+  <div class="stats">
+    <span>Верно: <b id="score">0</b> / <b id="total">0</b></span>
+    <span id="acc"></span>
+  </div>
+
+  <div class="card">
+    <div class="meta">
+      <span class="tag" id="catTag"></span>
+      <span id="pronTag"></span>
+    </div>
+    <div class="sentence" id="sentence"></div>
+    <div class="opts" id="opts"></div>
+
+    <div class="row">
+      <button class="btn ghost" id="hintBtn">💡 Подсказка</button>
+      <button class="btn primary" id="nextBtn" disabled>Дальше →</button>
+    </div>
+
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <footer>Один файл · ничего не отправляется в сеть · 32 местоимения</footer>
+</div>
+
+<script>
+/* ============================================================
+   Данные. Каждое предложение проверено по правилам литовской
+   грамматики (падежное управление глаголов, предлоги, согласование
+   рода/числа, возвратное savo при совпадении субъекта и владельца).
+   Поля: s — предложение с ___, a — ответ, o — варианты,
+   tr — перевод, gr — форма/падеж, note — правило (рус).
+   Частотность отражена числом предложений на местоимение.
+   ============================================================ */
+const DATA = [
+/* ---------------- ЛИЧНЫЕ ---------------- */
+{cat:"Личные", pron:"aš — я", items:[
+ {s:"___ esu iš Lietuvos.", a:"aš", o:["aš","mane","man"], tr:"Я из Литвы.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный падеж: «aš»."},
+ {s:"Jis ___ klausė vakar.", a:"manęs", o:["manęs","man","mane"], tr:"Он меня вчера спрашивал.", gr:"Kilmininkas (родительный)", note:"Глагол «klausti» (спрашивать) управляет родительным падежом: klausti ko? → manęs."},
+ {s:"Padėk ___, prašau.", a:"man", o:["man","mane","manęs"], tr:"Помоги мне, пожалуйста.", gr:"Naudininkas (дательный)", note:"Глагол «padėti» (помогать) требует дательного падежа: padėti kam? → man."},
+ {s:"Mokytoja ___ pagyrė.", a:"mane", o:["mane","man","manimi"], tr:"Учительница меня похвалила.", gr:"Galininkas (винительный)", note:"Прямое дополнение при переходном глаголе → винительный: pagirti ką? → mane."},
+ {s:"Ar eisi su ___?", a:"manimi", o:["manimi","manęs","man"], tr:"Пойдёшь со мной?", gr:"Įnagininkas (творительный)", note:"Предлог «su» (с) управляет творительным падежом: su manimi."},
+ {s:"Be ___ jie nepradės.", a:"manęs", o:["manęs","manimi","man"], tr:"Без меня они не начнут.", gr:"Kilmininkas (родительный)", note:"Предлог «be» (без) требует родительного падежа: be manęs."},
+ {s:"Jis ___ nepažįsta.", a:"manęs", o:["manęs","mane","man"], tr:"Он меня не знает.", gr:"Kilmininkas (родительный)", note:"При отрицании переходного глагола дополнение ставится в родительный: pažinti → винит., но nepažinti → manęs."},
+ {s:"Tu ___ matei parke.", a:"mane", o:["mane","man","manimi"], tr:"Ты видел меня в парке.", gr:"Galininkas (винительный)", note:"«matyti» (видеть) — переходный, без отрицания → винительный: mane."},
+ {s:"Jis ___ pasitiki.", a:"manimi", o:["manimi","manęs","man"], tr:"Он мне доверяет.", gr:"Įnagininkas (творительный)", note:"Глагол «pasitikėti» (доверять) управляет творительным падежом: pasitikėti kuo? → manimi."},
+ {s:"___ labai myliu šunis.", a:"aš", o:["aš","mane","man"], tr:"Я очень люблю собак.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «aš»."},
+]},
+{cat:"Личные", pron:"tu — ты", items:[
+ {s:"___ esi mano draugas.", a:"tu", o:["tu","tave","tau"], tr:"Ты мой друг.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «tu»."},
+ {s:"Aš ___ ieškojau visur.", a:"tavęs", o:["tavęs","tau","tave"], tr:"Я тебя везде искал.", gr:"Kilmininkas (родительный)", note:"«ieškoti» (искать) управляет родительным: ieškoti ko? → tavęs."},
+ {s:"Aš ___ duosiu pinigų.", a:"tau", o:["tau","tave","tavęs"], tr:"Я дам тебе денег.", gr:"Naudininkas (дательный)", note:"«duoti» (дать) — кому? → дательный: tau."},
+ {s:"Mes ___ kviečiame į vakarėlį.", a:"tave", o:["tave","tau","tavimi"], tr:"Мы приглашаем тебя на вечеринку.", gr:"Galininkas (винительный)", note:"«kviesti» (звать) — переходный → винительный: tave."},
+ {s:"Aš didžiuojuosi ___.", a:"tavimi", o:["tavimi","tavęs","tau"], tr:"Я горжусь тобой.", gr:"Įnagininkas (творительный)", note:"«didžiuotis» (гордиться) управляет творительным: didžiuotis kuo? → tavimi."},
+ {s:"Be ___ man liūdna.", a:"tavęs", o:["tavęs","tau","tave"], tr:"Без тебя мне грустно.", gr:"Kilmininkas (родительный)", note:"Предлог «be» (без) → родительный: be tavęs."},
+ {s:"Kas ___ tai pasakė?", a:"tau", o:["tau","tave","tavęs"], tr:"Кто тебе это сказал?", gr:"Naudininkas (дательный)", note:"«pasakyti» (сказать) — кому? → дательный: tau."},
+ {s:"Aš ___ myliu.", a:"tave", o:["tave","tau","tavimi"], tr:"Я тебя люблю.", gr:"Galininkas (винительный)", note:"«mylėti» (любить) — переходный → винительный: tave."},
+ {s:"Aš tavimi ___.", a:"pasitikiu", o:["pasitikiu","pasitiki","pasitikės"], tr:"Я тебе доверяю.", gr:"Глагол при tavimi", note:"При «aš» глагол в 1 л. ед.ч.: pasitikiu. (tavimi — творительный, его требует pasitikėti.)"},
+ {s:"Ką ___ veiki?", a:"tu", o:["tu","tave","tau"], tr:"Что ты делаешь?", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «tu» (а «ką» здесь — что)."},
+]},
+{cat:"Личные", pron:"jis — он", items:[
+ {s:"___ gyvena Vilniuje.", a:"jis", o:["jis","jį","jam"], tr:"Он живёт в Вильнюсе.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «jis»."},
+ {s:"Aš ___ nepažįstu.", a:"jo", o:["jo","jam","jį"], tr:"Я его не знаю.", gr:"Kilmininkas (родительный)", note:"При отрицании дополнение → родительный: nepažinti → jo."},
+ {s:"Duok ___ knygą.", a:"jam", o:["jam","jį","jo"], tr:"Дай ему книгу.", gr:"Naudininkas (дательный)", note:"«duoti» — кому? → дательный: jam."},
+ {s:"Mes ___ matėme parke.", a:"jį", o:["jį","jam","juo"], tr:"Мы видели его в парке.", gr:"Galininkas (винительный)", note:"«matyti» — переходный → винительный: jį."},
+ {s:"Aš einu su ___.", a:"juo", o:["juo","jį","jam"], tr:"Я иду с ним.", gr:"Įnagininkas (творительный)", note:"Предлог «su» → творительный; jis в творительном — «juo»."},
+ {s:"Visi kalba apie ___.", a:"jį", o:["jį","jo","jam"], tr:"Все говорят о нём.", gr:"Galininkas (винительный)", note:"Предлог «apie» (о) управляет винительным: apie jį."},
+ {s:"Be ___ neišeisime.", a:"jo", o:["jo","jam","jį"], tr:"Без него не уйдём.", gr:"Kilmininkas (родительный)", note:"Предлог «be» → родительный: be jo."},
+ {s:"Ji ___ padėjo.", a:"jam", o:["jam","jį","juo"], tr:"Она ему помогла.", gr:"Naudininkas (дательный)", note:"«padėti» → дательный: jam."},
+ {s:"Aš ___ pasitikiu.", a:"juo", o:["juo","jį","jam"], tr:"Я ему доверяю.", gr:"Įnagininkas (творительный)", note:"«pasitikėti» → творительный: juo."},
+ {s:"Mašina priklauso ___.", a:"jam", o:["jam","jį","juo"], tr:"Машина принадлежит ему.", gr:"Naudininkas (дательный)", note:"«priklausyti» (принадлежать) — кому? → дательный: jam."},
+]},
+{cat:"Личные", pron:"ji — она", items:[
+ {s:"___ yra gydytoja.", a:"ji", o:["ji","ją","jai"], tr:"Она врач.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «ji»."},
+ {s:"Aš ___ laukiu.", a:"jos", o:["jos","jai","ją"], tr:"Я её жду.", gr:"Kilmininkas (родительный)", note:"«laukti» (ждать) управляет родительным: laukti ko? → jos."},
+ {s:"Pasakyk ___ tiesą.", a:"jai", o:["jai","ją","jos"], tr:"Скажи ей правду.", gr:"Naudininkas (дательный)", note:"«pasakyti» — кому? → дательный: jai."},
+ {s:"Aš ___ pamačiau gatvėje.", a:"ją", o:["ją","jai","ja"], tr:"Я увидел её на улице.", gr:"Galininkas (винительный)", note:"«pamatyti» — переходный → винительный: ją (с носовой «ą»)."},
+ {s:"Jis kalbėjo su ___.", a:"ja", o:["ja","ją","jai"], tr:"Он говорил с ней.", gr:"Įnagininkas (творительный)", note:"Предлог «su» → творительный; ji в творительном — «ja» (без носовой)."},
+ {s:"Be ___ vakarėlis nebus įdomus.", a:"jos", o:["jos","jai","ją"], tr:"Без неё вечеринка будет неинтересной.", gr:"Kilmininkas (родительный)", note:"Предлог «be» → родительный: be jos."},
+ {s:"Aš ___ paskambinsiu rytoj.", a:"jai", o:["jai","ją","jos"], tr:"Я ей позвоню завтра.", gr:"Naudininkas (дательный)", note:"«skambinti» (звонить) — кому? → дательный: jai."},
+ {s:"Mes ___ pakvietėme šokti.", a:"ją", o:["ją","jai","ja"], tr:"Мы пригласили её танцевать.", gr:"Galininkas (винительный)", note:"«pakviesti» — переходный → винительный: ją."},
+ {s:"Aš pasitikiu ___.", a:"ja", o:["ja","ją","jai"], tr:"Я ей доверяю.", gr:"Įnagininkas (творительный)", note:"«pasitikėti» → творительный: ja."},
+ {s:"Kur ___ gyvena?", a:"ji", o:["ji","ją","jai"], tr:"Где она живёт?", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «ji»."},
+]},
+{cat:"Личные", pron:"mes — мы", items:[
+ {s:"___ esame draugai.", a:"mes", o:["mes","mus","mums"], tr:"Мы друзья.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «mes»."},
+ {s:"Jie ___ ilgai laukė.", a:"mūsų", o:["mūsų","mums","mus"], tr:"Они нас долго ждали.", gr:"Kilmininkas (родительный)", note:"«laukti» → родительный: laukti ko? → mūsų."},
+ {s:"Mokytojas ___ paaiškino taisyklę.", a:"mums", o:["mums","mus","mūsų"], tr:"Учитель объяснил нам правило.", gr:"Naudininkas (дательный)", note:"«paaiškinti» (объяснить) — кому? → дательный: mums."},
+ {s:"Jie ___ pakvietė į svečius.", a:"mus", o:["mus","mums","mumis"], tr:"Они пригласили нас в гости.", gr:"Galininkas (винительный)", note:"«pakviesti» — переходный → винительный: mus."},
+ {s:"Jis eina su ___.", a:"mumis", o:["mumis","mus","mums"], tr:"Он идёт с нами.", gr:"Įnagininkas (творительный)", note:"Предлог «su» → творительный: su mumis."},
+ {s:"Be ___ jie nepradės.", a:"mūsų", o:["mūsų","mums","mus"], tr:"Без нас они не начнут.", gr:"Kilmininkas (родительный)", note:"Предлог «be» → родительный: be mūsų."},
+ {s:"Padėk ___, prašome.", a:"mums", o:["mums","mus","mūsų"], tr:"Помоги нам, пожалуйста.", gr:"Naudininkas (дательный)", note:"«padėti» → дательный: mums."},
+ {s:"Jis ___ pasitiki.", a:"mumis", o:["mumis","mus","mums"], tr:"Он нам доверяет.", gr:"Įnagininkas (творительный)", note:"«pasitikėti» → творительный: mumis."},
+ {s:"___ einame namo.", a:"mes", o:["mes","mums","mus"], tr:"Мы идём домой.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «mes»."},
+]},
+{cat:"Личные", pron:"jūs — вы", items:[
+ {s:"___ esate teisūs.", a:"jūs", o:["jūs","jus","jums"], tr:"Вы правы.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «jūs» (длинное ū)."},
+ {s:"Mes ___ laukiame prie durų.", a:"jūsų", o:["jūsų","jums","jus"], tr:"Мы ждём вас у двери.", gr:"Kilmininkas (родительный)", note:"«laukti» → родительный: jūsų."},
+ {s:"Aš ___ padėsiu.", a:"jums", o:["jums","jus","jūsų"], tr:"Я вам помогу.", gr:"Naudininkas (дательный)", note:"«padėti» → дательный: jums (короткое u)."},
+ {s:"Mes ___ kviečiame.", a:"jus", o:["jus","jums","jumis"], tr:"Мы вас приглашаем.", gr:"Galininkas (винительный)", note:"«kviesti» → винительный: jus."},
+ {s:"Ar galiu eiti su ___?", a:"jumis", o:["jumis","jus","jums"], tr:"Можно мне пойти с вами?", gr:"Įnagininkas (творительный)", note:"Предлог «su» → творительный: su jumis."},
+ {s:"Be ___ mums sunku.", a:"jūsų", o:["jūsų","jums","jus"], tr:"Без вас нам трудно.", gr:"Kilmininkas (родительный)", note:"Предлог «be» → родительный: be jūsų."},
+ {s:"Ką ___ veikiate?", a:"jūs", o:["jūs","jus","jums"], tr:"Что вы делаете?", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «jūs»."},
+ {s:"Mes ___ pasitikime.", a:"jumis", o:["jumis","jus","jums"], tr:"Мы вам доверяем.", gr:"Įnagininkas (творительный)", note:"«pasitikėti» → творительный: jumis."},
+]},
+{cat:"Личные", pron:"jie — они (м.р.)", items:[
+ {s:"___ žaidžia futbolą.", a:"jie", o:["jie","juos","jiems"], tr:"Они играют в футбол.", gr:"Vardininkas (именительный), муж. род", note:"Подлежащее → именительный. «jie» — мужской род / смешанная группа."},
+ {s:"Aš ___ laukiu prie mokyklos.", a:"jų", o:["jų","jiems","juos"], tr:"Я жду их у школы.", gr:"Kilmininkas (родительный)", note:"«laukti» → родительный: jų (общая форма для jie и jos)."},
+ {s:"Aš ___ daviau dovanų.", a:"jiems", o:["jiems","juos","jų"], tr:"Я дал им подарки.", gr:"Naudininkas (дательный), муж. род", note:"«duoti» → дательный; мужской род мн.ч. — «jiems»."},
+ {s:"Mes ___ pakvietėme.", a:"juos", o:["juos","jiems","jais"], tr:"Мы пригласили их.", gr:"Galininkas (винительный), муж. род", note:"«pakviesti» → винительный; мужской род — «juos»."},
+ {s:"Aš einu su ___.", a:"jais", o:["jais","juos","jiems"], tr:"Я иду с ними.", gr:"Įnagininkas (творительный), муж. род", note:"Предлог «su» → творительный; jie → «jais»."},
+ {s:"Be ___ nepradėsime.", a:"jų", o:["jų","jiems","juos"], tr:"Без них не начнём.", gr:"Kilmininkas (родительный)", note:"Предлог «be» → родительный: be jų."},
+ {s:"Pasakyk ___ tiesą.", a:"jiems", o:["jiems","juos","jų"], tr:"Скажи им правду.", gr:"Naudininkas (дательный)", note:"«pasakyti» → дательный: jiems."},
+ {s:"Aš ___ matau kasdien.", a:"juos", o:["juos","jiems","jais"], tr:"Я вижу их каждый день.", gr:"Galininkas (винительный)", note:"«matyti» → винительный: juos."},
+ {s:"___ atvyko vakar.", a:"jie", o:["jie","juos","jiems"], tr:"Они приехали вчера.", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «jie»."},
+]},
+{cat:"Личные", pron:"jos — они (ж.р.)", items:[
+ {s:"___ dainuoja chore.", a:"jos", o:["jos","jas","joms"], tr:"Они поют в хоре.", gr:"Vardininkas (именительный), жен. род", note:"Подлежащее → именительный. «jos» — только женский род."},
+ {s:"Mes ___ laukiame.", a:"jų", o:["jų","joms","jas"], tr:"Мы их ждём.", gr:"Kilmininkas (родительный)", note:"«laukti» → родительный: jų (форма общая для jie/jos)."},
+ {s:"Aš ___ padovanojau gėlių.", a:"joms", o:["joms","jas","jų"], tr:"Я подарил им цветы.", gr:"Naudininkas (дательный), жен. род", note:"«padovanoti» → дательный; женский род мн.ч. — «joms»."},
+ {s:"Jis ___ pakvietė šokti.", a:"jas", o:["jas","joms","jomis"], tr:"Он пригласил их танцевать.", gr:"Galininkas (винительный), жен. род", note:"«pakviesti» → винительный; женский род — «jas»."},
+ {s:"Aš kalbėjau su ___.", a:"jomis", o:["jomis","jas","joms"], tr:"Я говорил с ними.", gr:"Įnagininkas (творительный), жен. род", note:"Предлог «su» → творительный; jos → «jomis»."},
+ {s:"Be ___ koncertas neįvyks.", a:"jų", o:["jų","joms","jas"], tr:"Без них концерт не состоится.", gr:"Kilmininkas (родительный)", note:"Предлог «be» → родительный: be jų."},
+ {s:"Pasakyk ___ naujieną.", a:"joms", o:["joms","jas","jų"], tr:"Скажи им новость.", gr:"Naudininkas (дательный)", note:"«pasakyti» → дательный: joms."},
+ {s:"Aš ___ dažnai matau.", a:"jas", o:["jas","joms","jomis"], tr:"Я их часто вижу.", gr:"Galininkas (винительный)", note:"«matyti» → винительный: jas."},
+ {s:"Kur ___ gyvena?", a:"jos", o:["jos","jas","joms"], tr:"Где они живут?", gr:"Vardininkas (именительный)", note:"Подлежащее → именительный: «jos»."},
+]},
+/* ---------------- ВОЗВРАТНОЕ ---------------- */
+{cat:"Возвратное", pron:"savęs — себя", items:[
+ {s:"Jis nekenčia ___.", a:"savęs", o:["savęs","sau","save"], tr:"Он ненавидит себя.", gr:"Kilmininkas (родительный)", note:"Возвратное местоимение не имеет именительного. После «nekęsti» (ненавидеть) — родительный: savęs."},
+ {s:"Nupirk ___ ką nors gražaus.", a:"sau", o:["sau","save","savęs"], tr:"Купи себе что-нибудь красивое.", gr:"Naudininkas (дательный)", note:"Адресат действия = сам субъект → возвратное в дательном: sau."},
+ {s:"Ji žiūri į ___ veidrodyje.", a:"save", o:["save","sau","savimi"], tr:"Она смотрит на себя в зеркале.", gr:"Galininkas (винительный)", note:"Предлог «į» (на/в) → винительный; объект совпадает с субъектом → save."},
+ {s:"Jis didžiuojasi ___.", a:"savimi", o:["savimi","savęs","sau"], tr:"Он гордится собой.", gr:"Įnagininkas (творительный)", note:"«didžiuotis» → творительный; субъект = объект → savimi."},
+ {s:"Jis užsidarė ___.", a:"savyje", o:["savyje","savęs","sau"], tr:"Он замкнулся в себе.", gr:"Vietininkas (местный)", note:"Местный падеж возвратного: savyje («в себе»)."},
+]},
+/* ---------------- ПРИТЯЖАТЕЛЬНЫЕ ---------------- */
+{cat:"Притяжательные", pron:"mano — мой", items:[
+ {s:"Aš turiu brolį — tai ___ brolis.", a:"mano", o:["mano","tavo","jo"], tr:"У меня есть брат — это мой брат.", gr:"Притяжательное, неизменяемое", note:"«mano» (мой) не склоняется. Владелец — «я», и он не подлежащее этого предложения, поэтому mano, а не savo."},
+ {s:"Aš ieškau ___ raktų.", a:"mano", o:["mano","savo","tavo"], tr:"Я ищу свои ключи.", gr:"Притяжательное / возвратное", note:"Здесь возможны оба, но при совпадении владельца и подлежащего норма — savo. По-русски «свои». Выбирай savo, если подлежащее = владелец.", alt:"savo"},
+ {s:"Štai ___ namas, aš čia gyvenu.", a:"mano", o:["mano","tavo","mūsų"], tr:"Вот мой дом, я здесь живу.", gr:"Притяжательное, неизменяемое", note:"Владелец «я», но он не подлежащее при «namas» → mano."},
+ {s:"Parodysiu tau ___ nuotraukas.", a:"savo", o:["savo","mano","tavo"], tr:"Покажу тебе свои фотографии.", gr:"Возвратно-притяжательное", note:"Подлежащее «(aš)» = владелец фотографий → возвратное savo («свои»)."},
+ {s:"___ mama gamina labai skaniai.", a:"mano", o:["mano","savo","tavo"], tr:"Моя мама готовит очень вкусно.", gr:"Притяжательное, неизменяемое", note:"Владелец не подлежащее (подлежащее — «mama») → mano. Пишется mano.", a2:"mano"},
+ {s:"Tai ___ mėgstamiausia knyga.", a:"mano", o:["mano","tavo","jos"], tr:"Это моя любимая книга.", gr:"Притяжательное, неизменяемое", note:"«mano» (мой) — форма одинаковая для любого рода и числа."},
+]},
+{cat:"Притяжательные", pron:"tavo — твой", items:[
+ {s:"Tu turi gražų balsą — ___ balsas nuostabus.", a:"tavo", o:["tavo","mano","jo"], tr:"У тебя красивый голос — твой голос чудесный.", gr:"Притяжательное, неизменяемое", note:"«tavo» (твой) не склоняется; владелец «ты» не подлежащее → tavo (не savo)."},
+ {s:"Ar tai ___ mašina?", a:"tavo", o:["tavo","mano","mūsų"], tr:"Это твоя машина?", gr:"Притяжательное, неизменяемое", note:"Обращение к собеседнику → tavo."},
+ {s:"Kur padėjai ___ knygą?", a:"savo", o:["savo","tavo","jo"], tr:"Куда ты положил свою книгу?", gr:"Возвратно-притяжательное", note:"Подлежащее «(tu)» = владелец → возвратное savo («свою»)."},
+ {s:"Man patinka ___ idėja.", a:"tavo", o:["tavo","mano","savo"], tr:"Мне нравится твоя идея.", gr:"Притяжательное, неизменяемое", note:"Подлежащее — «idėja», владелец «ты» не подлежащее → tavo."},
+ {s:"Parodyk man ___ namus.", a:"savo", o:["savo","tavo","mūsų"], tr:"Покажи мне свой дом.", gr:"Возвратно-притяжательное", note:"Подлежащее повелительного «(tu)» = владелец → savo."},
+]},
+{cat:"Притяжательные", pron:"savo — свой", items:[
+ {s:"Aš myliu ___ šeimą.", a:"savo", o:["savo","mano","jo"], tr:"Я люблю свою семью.", gr:"Возвратно-притяжательное, неизменяемое", note:"Главное правило: если владелец = подлежащее, употребляется savo. «manо» было бы ошибкой стиля."},
+ {s:"Jis pardavė ___ mašiną.", a:"savo", o:["savo","jo","jos"], tr:"Он продал свою машину.", gr:"Возвратно-притяжательное", note:"Подлежащее «jis» = владелец → savo. «jo mašiną» означало бы ЧУЖУЮ машину (другого мужчины)."},
+ {s:"Ji ieško ___ rakto.", a:"savo", o:["savo","jos","jo"], tr:"Она ищет свой ключ.", gr:"Возвратно-притяжательное", note:"Подлежащее «ji» = владелец → savo. «jos» указывало бы на ключ другой женщины."},
+ {s:"Mes kviečiame ___ draugus.", a:"savo", o:["savo","mūsų","jų"], tr:"Мы приглашаем своих друзей.", gr:"Возвратно-притяжательное", note:"Подлежащее «mes» = владелец → savo."},
+ {s:"Jie myli ___ tėvynę.", a:"savo", o:["savo","jų","mūsų"], tr:"Они любят свою родину.", gr:"Возвратно-притяжательное", note:"Подлежащее «jie» = владелец → savo. «jų» означало бы родину других."},
+ {s:"Tu turi saugoti ___ sveikatą.", a:"savo", o:["savo","tavo","jo"], tr:"Ты должен беречь своё здоровье.", gr:"Возвратно-притяжательное", note:"Подлежащее «(tu)» = владелец → savo."},
+ {s:"Vaikai tvarko ___ kambarį.", a:"savo", o:["savo","jų","jo"], tr:"Дети убирают свою комнату.", gr:"Возвратно-притяжательное", note:"Подлежащее «vaikai» = владельцы → savo."},
+]},
+{cat:"Притяжательные", pron:"jo — его", items:[
+ {s:"Jis turi dviratį. Tai ___ dviratis.", a:"jo", o:["jo","savo","jos"], tr:"У него есть велосипед. Это его велосипед.", gr:"Притяжательное (= род. от jis)", note:"Владелец «он» не является подлежащим 2-го предложения (подлежащее — «tai») → jo, а не savo."},
+ {s:"Aš mačiau ___ seserį vakar.", a:"jo", o:["jo","savo","jos"], tr:"Я видел его сестру вчера.", gr:"Притяжательное", note:"Подлежащее — «aš», владелец «он» — нет → jo («его»)."},
+ {s:"Mes buvome ___ namuose.", a:"jo", o:["jo","savo","jų"], tr:"Мы были в его доме.", gr:"Притяжательное", note:"Подлежащее «mes» ≠ владелец → jo."},
+ {s:"Tai ___ knyga, ne mano.", a:"jo", o:["jo","savo","jos"], tr:"Это его книга, не моя.", gr:"Притяжательное", note:"«jo» (его) — одинаково для любого рода предмета."},
+]},
+{cat:"Притяжательные", pron:"jos — её", items:[
+ {s:"Ji turi katę. Tai ___ katė.", a:"jos", o:["jos","savo","jo"], tr:"У неё есть кошка. Это её кошка.", gr:"Притяжательное (= род. от ji)", note:"Владелец «она» не подлежащее 2-го предложения → jos, не savo."},
+ {s:"Aš pažįstu ___ mamą.", a:"jos", o:["jos","savo","jo"], tr:"Я знаю её маму.", gr:"Притяжательное", note:"Подлежащее «aš» ≠ владелец → jos («её»)."},
+ {s:"Mums patinka ___ daina.", a:"jos", o:["jos","jo","savo"], tr:"Нам нравится её песня.", gr:"Притяжательное", note:"«jos» — её; форма не меняется по роду предмета."},
+ {s:"Tai ___ sumanymas, ne mūsų.", a:"jos", o:["jos","jo","savo"], tr:"Это её замысел, не наш.", gr:"Притяжательное", note:"Владелец «она» не подлежащее → jos."},
+]},
+{cat:"Притяжательные", pron:"mūsų — наш", items:[
+ {s:"Mes čia gyvename — tai ___ namai.", a:"mūsų", o:["mūsų","savo","jūsų"], tr:"Мы здесь живём — это наш дом.", gr:"Притяжательное (= род. от mes)", note:"Владелец «мы» не подлежащее 2-го предложения → mūsų."},
+ {s:"___ komanda laimėjo.", a:"mūsų", o:["mūsų","jūsų","jų"], tr:"Наша команда победила.", gr:"Притяжательное, неизменяемое", note:"«mūsų» (наш) совпадает с родительным падежом «mes»."},
+ {s:"Ateik į ___ vakarėlį.", a:"mūsų", o:["mūsų","jūsų","savo"], tr:"Приходи на нашу вечеринку.", gr:"Притяжательное", note:"Владелец «мы» не подлежащее повелительного (подлежащее — «ты») → mūsų."},
+ {s:"___ miestas labai gražus.", a:"mūsų", o:["mūsų","jūsų","jų"], tr:"Наш город очень красивый.", gr:"Притяжательное", note:"«mūsų» одинаково для любого рода и числа."},
+]},
+{cat:"Притяжательные", pron:"jūsų — ваш", items:[
+ {s:"Ar tai ___ automobilis?", a:"jūsų", o:["jūsų","mūsų","jų"], tr:"Это ваш автомобиль?", gr:"Притяжательное (= род. от jūs)", note:"«jūsų» (ваш) совпадает с родительным «jūs»; не склоняется."},
+ {s:"Man patinka ___ sodas.", a:"jūsų", o:["jūsų","mūsų","jo"], tr:"Мне нравится ваш сад.", gr:"Притяжательное", note:"Обращение к «вы» → jūsų."},
+ {s:"Kur yra ___ biuras?", a:"jūsų", o:["jūsų","mūsų","jų"], tr:"Где ваш офис?", gr:"Притяжательное", note:"«jūsų» одинаково для всех родов."},
+ {s:"___ vaikai labai mandagūs.", a:"jūsų", o:["jūsų","mūsų","jų"], tr:"Ваши дети очень вежливы.", gr:"Притяжательное", note:"Владелец «вы» не подлежащее (подлежащее — «vaikai») → jūsų."},
+]},
+{cat:"Притяжательные", pron:"jų — их", items:[
+ {s:"Jie turi namą — tai ___ namas.", a:"jų", o:["jų","savo","jo"], tr:"У них есть дом — это их дом.", gr:"Притяжательное (= род. от jie/jos)", note:"Владелец «они» не подлежащее 2-го предложения → jų, не savo."},
+ {s:"Aš pažįstu ___ tėvus.", a:"jų", o:["jų","savo","jo"], tr:"Я знаю их родителей.", gr:"Притяжательное", note:"Подлежащее «aš» ≠ владелец → jų («их»)."},
+ {s:"Mums patinka ___ muzika.", a:"jų", o:["jų","mūsų","jo"], tr:"Нам нравится их музыка.", gr:"Притяжательное", note:"«jų» — их; единая форма для мужского и женского рода владельцев."},
+ {s:"Tai ___ problema, ne mūsų.", a:"jų", o:["jų","mūsų","savo"], tr:"Это их проблема, не наша.", gr:"Притяжательное", note:"Владелец «они» не подлежащее → jų."},
+]},
+/* ---------------- УКАЗАТЕЛЬНЫЕ ---------------- */
+{cat:"Указательные", pron:"tas / ta — тот / та", items:[
+ {s:"___ vyras yra mano kaimynas.", a:"tas", o:["tas","ta","tie"], tr:"Тот мужчина — мой сосед.", gr:"Им. падеж, муж. род, ед.ч.", note:"«vyras» — мужского рода, ед.ч. → tas."},
+ {s:"___ moteris dirba banke.", a:"ta", o:["ta","tas","tos"], tr:"Та женщина работает в банке.", gr:"Им. падеж, жен. род, ед.ч.", note:"«moteris» — женского рода → ta."},
+ {s:"___ vaikai žaidžia kieme.", a:"tie", o:["tie","tos","tas"], tr:"Те дети играют во дворе.", gr:"Им. падеж, муж. род, мн.ч.", note:"«vaikai» — мужской род мн.ч. → tie."},
+ {s:"___ merginos studijuoja.", a:"tos", o:["tos","tie","ta"], tr:"Те девушки учатся.", gr:"Им. падеж, жен. род, мн.ч.", note:"«merginos» — женский род мн.ч. → tos."},
+ {s:"Ar matei ___ filmą?", a:"tą", o:["tą","tas","ta"], tr:"Ты видел тот фильм?", gr:"Вин. падеж, муж. род, ед.ч.", note:"«matyti» → винительный; «tas» в винительном — «tą» (с носовой)."},
+ {s:"Aš nepažįstu ___ žmogaus.", a:"to", o:["to","tas","tą"], tr:"Я не знаю того человека.", gr:"Род. падеж, муж. род, ед.ч.", note:"При отрицании → родительный; «tas» в родительном — «to»."},
+]},
+{cat:"Указательные", pron:"šis / ši — этот / эта", items:[
+ {s:"___ namas labai senas.", a:"šis", o:["šis","ši","šie"], tr:"Этот дом очень старый.", gr:"Им. падеж, муж. род, ед.ч.", note:"«namas» — мужской род → šis (близкий предмет)."},
+ {s:"___ knyga įdomi.", a:"ši", o:["ši","šis","šios"], tr:"Эта книга интересная.", gr:"Им. падеж, жен. род, ед.ч.", note:"«knyga» — женский род → ši."},
+ {s:"___ vaikai labai protingi.", a:"šie", o:["šie","šios","šis"], tr:"Эти дети очень умные.", gr:"Им. падеж, муж. род, мн.ч.", note:"«vaikai» — мужской род мн.ч. → šie."},
+ {s:"___ gėlės labai gražios.", a:"šios", o:["šios","šie","ši"], tr:"Эти цветы очень красивые.", gr:"Им. падеж, жен. род, мн.ч.", note:"«gėlės» — женский род мн.ч. → šios."},
+ {s:"Aš perku ___ automobilį.", a:"šį", o:["šį","šis","šią"], tr:"Я покупаю этот автомобиль.", gr:"Вин. падеж, муж. род, ед.ч.", note:"«pirkti» → винительный; «šis» в винительном — «šį»."},
+]},
+{cat:"Указательные", pron:"anas / ana — тот (вон тот)", items:[
+ {s:"___ kalnas labai aukštas.", a:"anas", o:["anas","ana","anie"], tr:"Та (вон та) гора очень высокая.", gr:"Им. падеж, муж. род, ед.ч.", note:"«anas» указывает на удалённый предмет; «kalnas» — муж. род → anas."},
+ {s:"___ moteris — mano mokytoja.", a:"ana", o:["ana","anas","anos"], tr:"Та женщина — моя учительница.", gr:"Им. падеж, жен. род, ед.ч.", note:"«moteris» — жен. род → ana."},
+ {s:"Matai ___ namą anapus upės?", a:"aną", o:["aną","anas","ana"], tr:"Видишь тот дом за рекой?", gr:"Вин. падеж, муж. род, ед.ч.", note:"«matyti» → винительный; «anas» → «aną»."},
+]},
+{cat:"Указательные", pron:"toks / tokia — такой / такая", items:[
+ {s:"Jis ___ aukštas!", a:"toks", o:["toks","tokia","tokie"], tr:"Он такой высокий!", gr:"Им. падеж, муж. род, ед.ч.", note:"Относится к «jis» (он) → toks."},
+ {s:"Ji ___ graži!", a:"tokia", o:["tokia","toks","tokios"], tr:"Она такая красивая!", gr:"Им. падеж, жен. род, ед.ч.", note:"Относится к «ji» (она) → tokia."},
+ {s:"Tai ___ įdomi knyga.", a:"tokia", o:["tokia","toks","tokie"], tr:"Это такая интересная книга.", gr:"Им. падеж, жен. род, ед.ч.", note:"Согласуется с «knyga» (жен. род) → tokia."},
+ {s:"Jie ___ draugiški.", a:"tokie", o:["tokie","tokios","toks"], tr:"Они такие дружелюбные.", gr:"Им. падеж, муж. род, мн.ч.", note:"Относится к «jie» (муж. род мн.ч.) → tokie."},
+]},
+/* ---------------- ВОПРОСИТЕЛЬНЫЕ ---------------- */
+{cat:"Вопросительные", pron:"kas — кто / что", items:[
+ {s:"___ čia gyvena?", a:"kas", o:["kas","ką","kam"], tr:"Кто здесь живёт?", gr:"Им. падеж", note:"«kas» в роли подлежащего → именительный. Одно слово и для «кто», и для «что»."},
+ {s:"___ tu nori?", a:"ko", o:["ko","ką","kam"], tr:"Чего ты хочешь?", gr:"Род. падеж", note:"«norėti» (хотеть) управляет родительным: norėti ko? → ko."},
+ {s:"___ tu duosi dovaną?", a:"kam", o:["kam","ką","ko"], tr:"Кому ты дашь подарок?", gr:"Дат. падеж", note:"«duoti» — кому? → дательный: kam."},
+ {s:"___ tu veiki?", a:"ką", o:["ką","kas","kam"], tr:"Что ты делаешь?", gr:"Вин. падеж", note:"Прямое дополнение → винительный: «kas» → «ką»."},
+ {s:"Su ___ tu kalbėjai?", a:"kuo", o:["kuo","ką","kam"], tr:"С кем ты говорил?", gr:"Твор. падеж", note:"Предлог «su» → творительный; «kas» → «kuo»."},
+ {s:"___ tai padarė?", a:"kas", o:["kas","ką","kam"], tr:"Кто это сделал?", gr:"Им. падеж", note:"Подлежащее → именительный: kas."},
+ {s:"Apie ___ jūs kalbate?", a:"ką", o:["ką","kas","kuo"], tr:"О чём вы говорите?", gr:"Вин. падеж", note:"Предлог «apie» → винительный: apie ką."},
+]},
+{cat:"Вопросительные", pron:"koks / kokia — какой / какая", items:[
+ {s:"___ šiandien oras?", a:"koks", o:["koks","kokia","kokie"], tr:"Какая сегодня погода?", gr:"Им. падеж, муж. род", note:"«oras» в литовском мужского рода → koks (хотя по-русски «погода» женского)."},
+ {s:"___ tavo mėgstamiausia spalva?", a:"kokia", o:["kokia","koks","kokios"], tr:"Какой твой любимый цвет?", gr:"Им. падеж, жен. род", note:"«spalva» — женского рода → kokia."},
+ {s:"___ čia knyga?", a:"kokia", o:["kokia","koks","kokie"], tr:"Какая это книга?", gr:"Им. падеж, жен. род", note:"Согласуется с «knyga» (жен. род) → kokia."},
+ {s:"___ filmą nori žiūrėti?", a:"kokį", o:["kokį","koks","kokią"], tr:"Какой фильм хочешь смотреть?", gr:"Вин. падеж, муж. род", note:"«filmą» в винительном; согласование → kokį."},
+]},
+{cat:"Вопросительные", pron:"kuris / kuri — который / которая", items:[
+ {s:"___ iš jūsų kalba lietuviškai?", a:"kuris", o:["kuris","kuri","kurie"], tr:"Кто (который) из вас говорит по-литовски?", gr:"Им. падеж, муж. род", note:"«kuris» — выбор из нескольких; муж. род → kuris."},
+ {s:"___ knyga tau patinka?", a:"kuri", o:["kuri","kuris","kurios"], tr:"Которая книга тебе нравится?", gr:"Им. падеж, жен. род", note:"Согласуется с «knyga» → kuri."},
+ {s:"___ autobusas važiuoja į centrą?", a:"kuris", o:["kuris","kuri","kurie"], tr:"Который автобус едет в центр?", gr:"Им. падеж, муж. род", note:"«autobusas» — муж. род → kuris."},
+ {s:"Štai vyras, ___ man padėjo.", a:"kuris", o:["kuris","kuri","kurį"], tr:"Вот мужчина, который мне помог.", gr:"Относительное, им. падеж, муж. род", note:"«kuris» вводит придаточное; подлежащее придаточного, муж. род → kuris."},
+]},
+{cat:"Вопросительные", pron:"katras / katra — который из двух", items:[
+ {s:"___ iš dviejų brolių vyresnis?", a:"katras", o:["katras","katra","kuris"], tr:"Который из двух братьев старше?", gr:"Им. падеж, муж. род", note:"«katras» — выбор именно из ДВУХ; муж. род → katras."},
+ {s:"___ ranka rašai — kairė ar dešinė?", a:"katra", o:["katra","katras","kuri"], tr:"Какой рукой пишешь — левой или правой?", gr:"Им. падеж, жен. род", note:"Выбор из двух; «ranka» — жен. род → katra."},
+]},
+/* ---------------- НЕОПРЕДЕЛЁННЫЕ И ОТРИЦАТЕЛЬНЫЕ ---------------- */
+{cat:"Неопределённые", pron:"kažkas — кто-то / что-то", items:[
+ {s:"___ pasibeldė į duris.", a:"kažkas", o:["kažkas","kažką","niekas"], tr:"Кто-то постучал в дверь.", gr:"Им. падеж", note:"«kažkas» — конкретное, но неизвестное лицо/предмет; подлежащее → им. падеж."},
+ {s:"Aš noriu tau ___ pasakyti.", a:"kažką", o:["kažką","kažkas","kažko"], tr:"Я хочу тебе что-то сказать.", gr:"Вин. падеж", note:"Дополнение при «pasakyti» → винительный: kažką."},
+ {s:"Čia ___ negerai.", a:"kažkas", o:["kažkas","kažką","niekas"], tr:"Здесь что-то не так.", gr:"Им. падеж", note:"Подлежащее → им. падеж: kažkas."},
+]},
+{cat:"Неопределённые", pron:"kas nors — кто-нибудь", items:[
+ {s:"Ar ___ matė mano raktus?", a:"kas nors", o:["kas nors","niekas","kažkas"], tr:"Кто-нибудь видел мои ключи?", gr:"Им. падеж", note:"«kas nors» — любой неопределённый; используется в вопросах и условиях. Здесь подлежащее."},
+ {s:"Jei ___ paskambins, pasakyk man.", a:"kas nors", o:["kas nors","niekas","kažką"], tr:"Если кто-нибудь позвонит, скажи мне.", gr:"Им. падеж", note:"В условном придаточном — «kas nors» (кто-нибудь), подлежащее → им. падеж."},
+]},
+{cat:"Отрицательные", pron:"niekas — никто / ничто", items:[
+ {s:"___ nežino atsakymo.", a:"niekas", o:["niekas","kažkas","visi"], tr:"Никто не знает ответа.", gr:"Им. падеж (двойное отрицание)", note:"В литовском обязательно двойное отрицание: niekas + nežino. «niekas» — подлежащее."},
+ {s:"Aš ___ nematau.", a:"nieko", o:["nieko","niekas","niekam"], tr:"Я ничего не вижу.", gr:"Род. падеж", note:"При отрицании дополнение → родительный; «niekas» → «nieko». Глагол тоже с «ne-»."},
+ {s:"Čia ___ nėra.", a:"nieko", o:["nieko","niekas","niekam"], tr:"Здесь никого/ничего нет.", gr:"Род. падеж", note:"«nėra» (нет, отсутствует) управляет родительным: nieko."},
+]},
+{cat:"Определительные", pron:"visi / visos — все", items:[
+ {s:"___ vaikai gavo dovanų.", a:"visi", o:["visi","visos","visas"], tr:"Все дети получили подарки.", gr:"Им. падеж, муж. род, мн.ч.", note:"«vaikai» — муж. род мн.ч. → visi."},
+ {s:"___ merginos šoka.", a:"visos", o:["visos","visi","visa"], tr:"Все девушки танцуют.", gr:"Им. падеж, жен. род, мн.ч.", note:"«merginos» — жен. род мн.ч. → visos."},
+ {s:"Aš pažįstu ___ čia.", a:"visus", o:["visus","visi","visiems"], tr:"Я знаю всех здесь.", gr:"Вин. падеж, муж. род, мн.ч.", note:"«pažinti» → винительный; «visi» → «visus»."},
+]},
+{cat:"Определительные", pron:"kiekvienas — каждый", items:[
+ {s:"___ žmogus turi svajonę.", a:"kiekvienas", o:["kiekvienas","kiekviena","visi"], tr:"Каждый человек имеет мечту.", gr:"Им. падеж, муж. род, ед.ч.", note:"«žmogus» — муж. род, ед.ч. → kiekvienas. Употребляется только в ед.ч."},
+ {s:"___ diena yra dovana.", a:"kiekviena", o:["kiekviena","kiekvienas","visa"], tr:"Каждый день — подарок.", gr:"Им. падеж, жен. род, ед.ч.", note:"«diena» — жен. род → kiekviena."},
+]},
+{cat:"Определительные", pron:"kitas / kita — другой", items:[
+ {s:"Duok man ___ knygą.", a:"kitą", o:["kitą","kita","kitas"], tr:"Дай мне другую книгу.", gr:"Вин. падеж, жен. род, ед.ч.", note:"«knyga» в винительном; жен. род → kitą."},
+ {s:"___ kartą būk atsargesnis.", a:"kitą", o:["kitą","kitas","kita"], tr:"В другой раз будь осторожнее.", gr:"Вин. падеж, муж. род, ед.ч.", note:"Устойчивое «kitą kartą» (в другой раз); «kartas» муж. род, вин. падеж → kitą."},
+ {s:"Vienas miega, ___ skaito.", a:"kitas", o:["kitas","kita","kiti"], tr:"Один спит, другой читает.", gr:"Им. падеж, муж. род, ед.ч.", note:"Подлежащее, муж. род → kitas."},
+]},
+{cat:"Определительные", pron:"pats / pati — сам / сама", items:[
+ {s:"Aš ___ tai padariau.", a:"pats", o:["pats","pati","patys"], tr:"Я сам это сделал.", gr:"Им. падеж, муж. род, ед.ч.", note:"«pats» усиливает «aš» (говорящий-мужчина) → pats."},
+ {s:"Ji ___ viską supranta.", a:"pati", o:["pati","pats","pačios"], tr:"Она сама всё понимает.", gr:"Им. падеж, жен. род, ед.ч.", note:"Согласуется с «ji» (она) → pati."},
+ {s:"Jis ___ atvažiavo.", a:"pats", o:["pats","pati","patys"], tr:"Он сам приехал.", gr:"Им. падеж, муж. род, ед.ч.", note:"Согласуется с «jis» (он) → pats."},
+]},
+];
+
+/* ---------- краткие описания падежей ---------- */
+const CASE_INFO = [
+ {re:/Vardininkas|именительн/i,  d:"отвечает на вопрос «kas?» (кто? что?). Это падеж подлежащего — того, кто выполняет действие."},
+ {re:/Kilmininkas|родительн/i,   d:"отвечает на «ko? kieno?» (кого? чего? чей?). Принадлежность, отсутствие, отрицание, а также после предлогов be, iš, nuo и глаголов laukti, ieškoti, norėti."},
+ {re:/Naudininkas|дательн/i,     d:"отвечает на «kam?» (кому?). Адресат действия — тот, кому что-то дают, говорят, помогают."},
+ {re:/Galininkas|винительн/i,    d:"отвечает на «ką?» (кого? что?). Прямой объект действия (matyti, mylėti, kviesti) и после предлогов į, apie."},
+ {re:/Įnagininkas|творительн/i,  d:"отвечает на «kuo? su kuo?» (кем? чем? с кем?). Орудие, средство или совместность; обязателен после предлога su и глаголов pasitikėti, didžiuotis."},
+ {re:/Vietininkas|местн/i,       d:"отвечает на «kur? kame?» (где? в ком? в чём?). Обозначает место или нахождение внутри."},
+];
+function caseDesc(gr){ const m=CASE_INFO.find(c=>c.re.test(gr)); return m?m.d:null; }
+
+/* ---------- сборка пула вопросов ---------- */
+const POOL = [];
+DATA.forEach(g => g.items.forEach(it => POOL.push({...it, cat:g.cat, pron:g.pron})));
+
+const CATS = ["Все", ...Array.from(new Set(DATA.map(g => g.cat)))];
+
+/* ---------- состояние ---------- */
+let activeCat = "Все";
+let score = 0, total = 0;
+let current = null, answered = false;
+let lastKey = null;
+
+/* ---------- утилиты ---------- */
+function shuffle(a){ // Fisher–Yates
+  const r = a.slice();
+  for(let i=r.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]]; }
+  return r;
+}
+function pickQuestion(){
+  let pool = activeCat==="Все" ? POOL : POOL.filter(q=>q.cat===activeCat);
+  if(pool.length>1){ const f = pool.filter(q=> (q.cat+q.s)!==lastKey); if(f.length) pool=f; }
+  const q = pool[Math.floor(Math.random()*pool.length)];
+  lastKey = q.cat+q.s;
+  return q;
+}
+
+/* ---------- отрисовка ---------- */
+const $ = id => document.getElementById(id);
+
+function renderFilters(){
+  const box = $("filters"); box.innerHTML="";
+  CATS.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="chip"+(c===activeCat?" active":"");
+    b.textContent=c;
+    b.onclick=()=>{ activeCat=c; renderFilters(); nextQuestion(); };
+    box.appendChild(b);
+  });
+}
+
+function render(q){
+  current=q; answered=false;
+  $("catTag").textContent=q.cat;
+  $("pronTag").textContent=q.pron;
+  $("sentence").innerHTML=q.s.replace("___",'<span class="blank" id="blank">?</span>');
+  const opts=$("opts"); opts.innerHTML="";
+  shuffle(q.o).forEach(opt=>{
+    const b=document.createElement("button");
+    b.className="opt"; b.textContent=opt;
+    b.onclick=()=>choose(b,opt);
+    opts.appendChild(b);
+  });
+  $("hint").className="hint";
+  $("hint").innerHTML=buildHint(q);
+  $("nextBtn").disabled=true;
+}
+
+function buildHint(q){
+  let rows = "";
+  rows += `<div class="h-row"><span class="h-label">Правильно</span><br><span class="lt">${q.s.replace("___","<b>"+q.a+"</b>")}</span></div>`;
+  rows += `<div class="h-row"><span class="h-label">Перевод</span><br>${q.tr}</div>`;
+  rows += `<div class="h-row"><span class="h-label">Форма / падеж</span><br>${q.gr}</div>`;
+  const cd = caseDesc(q.gr);
+  if(cd) rows += `<div class="h-row"><span class="h-label">О падеже</span><br>${cd}</div>`;
+  rows += `<div class="h-row"><span class="h-label">Правило</span><br>${q.note}</div>`;
+  return rows;
+}
+
+function choose(btn, opt){
+  if(answered) return;
+  answered=true;
+  const correct = opt===current.a;
+  // подсветить
+  Array.from($("opts").children).forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===current.a) b.classList.add("correct");
+    else if(b===btn) b.classList.add("wrong");
+  });
+  const blank=$("blank");
+  if(blank){ blank.textContent=current.a; blank.classList.add("filled"); }
+  total++; if(correct) score++;
+  updateStats();
+  if(!correct) $("hint").classList.add("show"); // при ошибке сразу показываем объяснение
+  $("nextBtn").disabled=false;
+}
+
+function updateStats(){
+  $("score").textContent=score;
+  $("total").textContent=total;
+  $("acc").textContent = total ? Math.round(score/total*100)+"%" : "";
+}
+
+function nextQuestion(){ render(pickQuestion()); }
+
+/* ---------- события ---------- */
+$("hintBtn").onclick=()=> $("hint").classList.toggle("show");
+$("nextBtn").onclick=()=> nextQuestion();
+
+/* ---------- старт ---------- */
+renderFilters();
+updateStats();
+nextQuestion();
+</script>
+</body>
+</html>
